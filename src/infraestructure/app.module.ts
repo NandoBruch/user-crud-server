@@ -5,7 +5,7 @@ import configuration from '../config/configuration';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { JwtModule } from '@nestjs/jwt';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { AuthGuard } from 'src/request/http/guard/auth-guard';
 import { redisCacheAsyncConfig } from './redis/redis-cache.provider';
 import { typeOrmAsyncConfig } from './typeorm/database.provider';
@@ -16,6 +16,7 @@ import {
 } from 'nest-winston';
 import * as winston from 'winston';
 import { RequestLoggerMiddleware } from '@src/request/http/middleware/request-logger-middleware';
+import { TypeOrmExceptionMappinInterceptor } from '@src/request/http/interceptor/typeorm-exception-mapping.interceptor';
 
 @Module({
   imports: [
@@ -45,6 +46,10 @@ import { RequestLoggerMiddleware } from '@src/request/http/middleware/request-lo
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TypeOrmExceptionMappinInterceptor,
     },
     Logger,
   ],
