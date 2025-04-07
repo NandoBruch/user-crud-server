@@ -1,4 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { UserDTO } from './dto/user.dto';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,9 +20,15 @@ export class UserService {
   ) {}
 
   async createUser(userDto: UserDTO): Promise<UserDTO> {
-    await this.cacheManager.del(this.USER_LIST_CACHE_KEY);
+    const alreadyExists = await this.userRepository.existsBy({
+      id: userDto.id,
+    });
+    if (alreadyExists) throw new ConflictException('User already exists');
+
     const user = this.userRepository.create(userDto);
-    return await this.userRepository.save(user);
+    const savedUser = await this.userRepository.save(user);
+    await this.cacheManager.del(this.USER_LIST_CACHE_KEY);
+    return savedUser;
   }
 
   async getUsers(): Promise<UserDTO[]> {
@@ -42,13 +53,15 @@ export class UserService {
   }
 
   async updateUser(id: number, userDto: UserDTO): Promise<UserDTO> {
-    await this.cacheManager.del(this.USER_LIST_CACHE_KEY);
     await this.userRepository.update(id, userDto);
+    await this.cacheManager.del(this.USER_LIST_CACHE_KEY);
+
     return await this.userRepository.findOneByOrFail({ id });
   }
 
   async deleteUser(id: number): Promise<void> {
+    const { affected } = await this.userRepository.delete(id);
+    if (!affected) throw new NotFoundException('User not found');
     await this.cacheManager.del(this.USER_LIST_CACHE_KEY);
-    await this.userRepository.delete(id);
   }
 }
