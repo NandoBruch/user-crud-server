@@ -1,4 +1,4 @@
-import { Logger, Module } from '@nestjs/common';
+import { Logger, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { Modules } from '../modules';
 import { ConfigModule } from '@nestjs/config';
 import configuration from '../config/configuration';
@@ -15,6 +15,7 @@ import {
   WinstonModule,
 } from 'nest-winston';
 import * as winston from 'winston';
+import { RequestLoggerMiddleware } from '@src/request/http/middleware/request-logger-middleware';
 
 @Module({
   imports: [
@@ -48,4 +49,8 @@ import * as winston from 'winston';
     Logger,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestLoggerMiddleware).forRoutes('*');
+  }
+}
