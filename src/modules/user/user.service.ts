@@ -1,10 +1,5 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { UserDTO } from './dto/user.dto';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { UserCreateDTO, UserDTO } from './dto/user.dto';
 import { CACHE_MANAGER, Cache } from '@nestjs/cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
@@ -19,12 +14,7 @@ export class UserService {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
-  async createUser(userDto: UserDTO): Promise<UserDTO> {
-    const alreadyExists = await this.userRepository.existsBy({
-      id: userDto.id,
-    });
-    if (alreadyExists) throw new ConflictException('User already exists');
-
+  async createUser(userDto: UserCreateDTO): Promise<UserDTO> {
     const user = this.userRepository.create(userDto);
     const savedUser = await this.userRepository.save(user);
     await this.cacheManager.del(this.USER_LIST_CACHE_KEY);

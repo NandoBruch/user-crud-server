@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { IsEmail, IsPhoneNumber, IsString } from 'class-validator';
 
 export class UserDTO {
@@ -20,4 +21,9 @@ export class UserDTO {
 
   @IsPhoneNumber('BR')
   phone: string;
+}
+
+export class UserCreateDTO extends UserDTO {
+  @Exclude()
+  declare id?: number;
 }
